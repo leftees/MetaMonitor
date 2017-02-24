@@ -25,8 +25,7 @@ public class AsyncRetrieveStatusQueueableJob implements Queueable, Database.Allo
             asyncQueueRec = asyncQueueRecList[asyncQueueRecList.size()-1];                                            
             try{
                 HttpRequest getSessionReq = new HttpRequest();
-                //TODO: Put the string in Label 
-                // Make use of Custom Label
+                //TODO: Put the string in Label                 
                 getSessionReq.setEndpoint('callout:MetaCheck/services/apexrest/CompDepSrchDev/UserInfoSessionInfo');
                 getSessionReq.setMethod('GET');
                 Http http = new Http();
