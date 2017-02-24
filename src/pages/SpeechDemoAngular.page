@@ -1,4 +1,4 @@
-<apex:page showHeader="false">
+<apex:page showHeader="false" >
    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"/>
    <script src="//cdnjs.cloudflare.com/ajax/libs/jsforce/1.7.0/jsforce.min.js"></script>
@@ -20,7 +20,6 @@
       <button class="btn">Say What?</button>
     </form>
     <div>
-
         <br/><hr/>
         <article class="slds-card">
           <div class="slds-card__header slds-grid">
@@ -198,5 +197,5 @@
 </script>
 
     </html>
-
+      
 </apex:page>
