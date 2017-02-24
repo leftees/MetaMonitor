@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>chilakap@adobe.com</contactEmail>
+    <label>MetaCheck</label>
+    <oauthConfig>
+        <callbackUrl>https://login.salesforce.com/services/authcallback/00D6F000001f5wEUAQ/MetaCheck</callbackUrl>
+        <consumerKey>3MVG9YDQS5WtC11o0F02P8zHfVcB9AJgKJe_6NtlJVwzQqHcci1eR962JBFiDwDp2OjsPlcUUWCCgrze0WzuD</consumerKey>
+        <scopes>Basic</scopes>
+        <scopes>Api</scopes>
+        <scopes>Web</scopes>
+        <scopes>Full</scopes>
+        <scopes>Chatter</scopes>
+        <scopes>CustomApplications</scopes>
+        <scopes>RefreshToken</scopes>
+        <scopes>OpenID</scopes>
+        <scopes>CustomPermissions</scopes>
+        <scopes>Wave</scopes>
+    </oauthConfig>
+</ConnectedApp>

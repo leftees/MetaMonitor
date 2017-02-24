@@ -1,0 +1,202 @@
+<apex:page showHeader="false">
+   <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"/>
+   <script src="//cdnjs.cloudflare.com/ajax/libs/jsforce/1.7.0/jsforce.min.js"></script>
+   
+   <script type="text/javascript">
+    
+   </script>
+
+
+   <apex:slds />   
+  <div id="speechTest" ng-app="SpeechApp"  ng-controller="speechCtrl">
+
+      <select ng-model="optionSelected" ng-options="voice.name for voice in voices">
+        <option value="">Choose Accent</option>
+      </select>
+
+    <form ng-submit="submitEntry()">
+      <input ng-model="msg" type="text" placeholder="Enter here"/>
+      <button class="btn">Say What?</button>
+    </form>
+    <div>
+
+        <br/><hr/>
+        <article class="slds-card">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media--center slds-has-flexi-truncate">
+              <div class="slds-media__figure">
+                <span class="slds-icon_container slds-icon-standard-contact" title="description of icon when needed">
+                  <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                    <use xlink:href="/assets/icons/standard-sprite/svg/symbols.svg#contact"></use>
+                  </svg>
+                </span>
+              </div>
+              <div class="slds-media__body">
+                <h2>
+                  <a href="javascript:void(0);" class="slds-card__header-link slds-truncate">
+                    <span class="slds-text-heading--small">Accounts {{AccountList.length}}</span>
+                  </a>
+                </h2>
+              </div>
+            </header>
+            <div class="slds-no-flex">
+              <button class="slds-button slds-button--neutral">New</button>
+            </div>
+          </div>
+          <div class="slds-card__body">
+            <table class="slds-table slds-table--bordered slds-no-row-hover slds-table--cell-buffer">
+              <thead>
+                <tr class="slds-text-title--caps">
+                  <th scope="col">
+                    <div class="slds-truncate" title="Name">Name</div>
+                  </th>
+                  <th scope="col">
+                    <div class="slds-truncate" title="Company">Account Number</div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="slds-hint-parent" ng-repeat="acRec in AccountList">
+                  <th scope="row">
+                    <div class="slds-truncate" title="Adam Choi"><a href="javascript:void(0);">{{acRec.Name}}</a></div>
+                  </th>
+                  <td>
+                    <div class="slds-truncate" title="Company One">{{acRec.AccountNumber}}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="slds-card__footer"><a href="javascript:void(0);">View All <span class="slds-assistive-text">entity type</span></a></div>
+        </article>
+    
+    
+    </div>
+  </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
+    <script>
+    angular.module('SpeechModule', []).
+    factory('speech', function () {
+
+        if(window.speechSynthesis) {
+            var msg = new SpeechSynthesisUtterance();
+        }
+
+        function getVoices() {       
+            window.speechSynthesis.getVoices();
+          return window.speechSynthesis.getVoices();
+        }
+  
+        function sayIt(text, config) {
+            var voices = getVoices();
+         
+            //choose voice. Fallback to default
+            msg.voice = config && config.voiceIndex ? voices[config.voiceIndex] : voices[0];
+            msg.volume = config && config.volume ? config.volume : 1;
+            msg.rate = config && config.rate ? config.rate : 1;
+            msg.pitch = config && config.pitch ? config.pitch : 1;
+
+            //message for speech
+            msg.text = text;
+            speechSynthesis.speak(msg);
+        }
+
+        return {
+            sayText: sayIt,
+            getVoices: getVoices
+        };
+    });
+
+
+    angular.module('SpeechApp', ['SpeechModule'])
+    .controller('speechCtrl', ['$scope', '$timeout', 'speech', function ($scope, $timeout, speech) {
+      $scope.support = false;
+      $scope.AccountList = [];
+      
+      if(window.speechSynthesis) {
+        $scope.support = true;                                    
+      
+        $timeout(function () {
+          $scope.voices = speech.getVoices();          
+        }, 500);  
+      }
+
+        $scope.pitch = 1;
+        $scope.rate = 1;           
+        $scope.volume = 1;
+      
+        $scope.submitEntry = function () {            
+            var voiceIdx = $scope.voices.indexOf($scope.optionSelected);
+            console.log(voiceIdx);
+                config = {
+                  voiceIndex: voiceIdx,
+                  rate: $scope.rate,
+                  pitch: $scope.pitch,
+                  volume: $scope.volume
+                };
+
+            if(window.speechSynthesis) {
+                speech.sayText($scope.msg, config);
+            }
+        }
+
+        if(window.speechSynthesis) {
+            $scope.optionSelected = {
+                "peechSynthesisVoicedefault": false, 
+                "lang": "en-GB",
+                "localService": "false",
+                "name": "Google UK English Male",
+                "voiceURI": "Google UK English Male"            
+            };
+
+            console.log($scope.optionSelected);
+            //speech.sayText('Good morning How can i help you today ?');
+        }
+        
+    // Voice Recognation using annyang
+    if (annyang) {
+      // Lets define our first command. First the text we expect, and then the function it should call
+      var commands = {
+        'Display Accounts': function() {
+          console.log('&&&&&&&&&&&&&&&&&');
+          speech.sayText('Searching accounts.. Please wait ');
+          
+            var conn = new jsforce.Connection({ accessToken: '{!$API.Session_Id}' });
+            conn.query('SELECT Id, Name, AccountNumber FROM Account limit 10', function(err, res) {
+              if (err) { 
+                  speech.sayText('An error occured while fetching accounts');
+                  return console.error(err); 
+              }
+              console.log(res);
+              $scope.AccountList = res.records;
+              speech.sayText('Account Search Completed. Found '+res.totalSize +'Accounts');
+               $scope.$apply();
+            });                              
+          
+        }
+      };
+
+      var welcomeCommand = {
+        'Hello': function() {
+
+          speech.sayText('Hello! How Can I help you ?');
+                                          
+          
+        }
+      };
+    
+      // Add our commands to annyang
+      annyang.addCommands(welcomeCommand);
+      annyang.addCommands(commands);
+      annyang.debug();
+      // Start listening. You can call this here, or attach this call to an event, button, etc.
+      annyang.start();
+    }        
+    }]);    
+</script>
+
+    </html>
+
+</apex:page>

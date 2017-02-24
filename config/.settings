@@ -1,0 +1,17 @@
+{
+    "projectName": "MetaMonitor",
+    "username": "appbuilding@sfdc.com",
+    "id": "14e35220-fab7-11e6-923a-131dfb73787c",
+    "namespace": "CompDepSrchDev",
+    "orgType": "developer",
+    "loginUrl": "https://login.salesforce.com/",
+    "instanceUrl": "https://ap4.salesforce.com",
+    "workspace": "C:\\Users\\chilakap\\Documents\\MM Workspace\\adobe",
+    "subscription": [
+        "ApexClass",
+        "ApexComponent",
+        "ApexPage",
+        "ApexTrigger",
+        "StaticResource"
+    ]
+}
