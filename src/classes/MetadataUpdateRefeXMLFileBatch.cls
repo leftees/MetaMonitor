@@ -17,13 +17,14 @@ global class MetadataUpdateRefeXMLFileBatch implements Database.Batchable<String
                componentType = atmnt[atmnt.size()-1].Parent.Name;
                 ZipFile = new Zippex(atmnt[atmnt.size()-1].Body);
                 fileNames.addAll(ZipFile.getFileNames());   
-
-                // CPU Time out for Example : CustomLabels will be pulled from with large file size
-                MetadataService.UpsertResult[] results = MetadataReferenceUtil.CreateStaticResourceFile('Temp_'+atmnt[atmnt.size()-1].Parent.Name, atmnt[atmnt.size()-1].Body);
-                system.debug('*******************'+results);
-                if(results != null && results[0].created){
-                    staticResourceName = 'Temp_'+atmnt[atmnt.size()-1].Parent.Name;
-                }                
+                //if(fileNames.size() < 5){
+                    // CPU Time out for Example : CustomLabels will be pulled from with large file size
+                    MetadataService.UpsertResult[] results = MetadataReferenceUtil.CreateStaticResourceFile('Temp_'+atmnt[atmnt.size()-1].Parent.Name, atmnt[atmnt.size()-1].Body);
+                    system.debug('*******************'+results);
+                    if(results != null && results[0].created){
+                        staticResourceName = 'Temp_'+atmnt[atmnt.size()-1].Parent.Name;
+                    }  
+                //}              
            }         
        }     
    }
