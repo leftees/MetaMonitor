@@ -23,6 +23,7 @@ global class MetadataUpdateRefeQueryBatch implements Database.Batchable<sObject>
       list<MetadataComponents> compReferenceList = new list<MetadataComponents>(); 
       for(sObject s : scope){
             //ApexClass cls = (ApexClass)s;
+            // Get the Component Body 
             string removedComments = MetadataReferenceUtil.RemoveApexComments(string.valueof(s.get(markUpField)));
             MetadataComponents comp  = new MetadataComponents();
             comp.MetadataApiName = string.valueof(s.get('Name'));

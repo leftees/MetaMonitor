@@ -146,8 +146,7 @@ public class MetadataReferenceUtil{
                     refComp.APINameAndType__c = (childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase();                                                
                     if(!CompUniqueKeyMap.containskey((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase())){
                         CompUniqueKeyMap.put((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase(),refComp);
-                    } 
-                    //if(!refrnceCompMap.containskey((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase()) ){
+                    }                     
                     Components__c compRefRec = new Components__c();
                     compRefRec.APINameAndType__c = (childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase();
                     refrnceCompMap.put((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase(),compRefRec);
@@ -155,8 +154,7 @@ public class MetadataReferenceUtil{
                     compRefeRec.Parent_Component__r = MainCompRefMap.get((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase());
                     compRefeRec.Child_Component__r = refrnceCompMap.get((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase());
                     compRefeRec.UniqueKey__c = CompUniqueKeyMap.get((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase()).APINameAndType__c+'-'+CompUniqueKeyMap.get((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase()).APINameAndType__c;
-                    upsertCompReferenceList.add(compRefeRec);
-                    //}                                       
+                    upsertCompReferenceList.add(compRefeRec);                                                      
                 }
             }
         }        
@@ -164,8 +162,12 @@ public class MetadataReferenceUtil{
         Schema.SObjectField f = Components__c.APINameAndType__c ;        
         
         Database.UpsertResult[] pareteRecResults = Database.upsert(CompUniqueKeyMap.values(),f,false);
+        list<Error_Handler__c>  errorList = new list<Error_Handler__c>();
         for(Database.UpsertResult res: pareteRecResults ){
-            system.debug('*******'+res);        
+            system.debug('*******'+res);     
+            Error_Handler__c error = new Error_Handler__c();
+            error.Error_Description__c = string.valueOf(res);
+            errorList.add(error);
         }
         
         for(string c: CompUniqueKeyMap.keySet()){
@@ -177,9 +179,13 @@ public class MetadataReferenceUtil{
                 
         Database.UpsertResult[] childObjResults = Database.upsert(upsertCompReferenceList,false);
         for(Database.UpsertResult res: childObjResults ){
-           system.debug('CCCC*******'+res);        
+           system.debug('CCCC*******'+res); 
+            Error_Handler__c error = new Error_Handler__c();
+            error.Error_Description__c = string.valueOf(res);
+            errorList.add(error);                  
         }             
         
+        //insert errorList;
     }    
     
     
@@ -254,5 +260,71 @@ public class MetadataReferenceUtil{
         MetadataService.RetrieveResult retrieveResult = service.checkRetrieveStatus(asyncId, true);      
         return retrieveResult ;        
     }
-    
+
+
+    public static MetadataService.UpsertResult[] CreateStaticResourceFile(string StaticResName,blob AttachmentBody){
+        string SESSION_ID;
+        MetadataService.UpsertResult[] retrieveResult ;
+        try{
+            HttpRequest getSessionReq = new HttpRequest();
+            //TODO: Put the string in Label                 
+            getSessionReq.setEndpoint('callout:MetaCheck/services/apexrest/CompDepSrchDev/UserInfoSessionInfo');
+            getSessionReq.setMethod('GET');
+            Http http = new Http();
+
+            HTTPResponse getSessionRes = http.send(getSessionReq);        
+            SESSION_ID = getSessionRes.getbody();    
+
+             if(SESSION_ID != null){
+                    SESSION_ID = SESSION_ID.replace('"','');            
+                    system.debug('&***********'+SESSION_ID); 
+                    MetadataService.MetadataPort portService = new MetadataService.MetadataPort();
+                    portService.SessionHeader = new MetadataService.SessionHeader_element();
+                    portService.SessionHeader.sessionId = SESSION_ID;
+                    // Construct unmanaged package with component Type to retrieve in zip
+                    MetadataService.MetadataPort service = portService;          
+                    MetadataService.StaticResource staticResource = new MetadataService.StaticResource();
+                    staticResource.fullName = StaticResName;
+                    staticResource.contentType = 'application/x-zip-compressed';
+                    staticResource.cacheControl = 'public';
+                    staticResource.content = EncodingUtil.base64Encode(AttachmentBody);                     
+                    retrieveResult = service.upsertMetadata(new List<MetadataService.Metadata> { staticResource }); 
+                    return retrieveResult;            
+             }
+        }catch(Exception exp){
+            return retrieveResult ; 
+        }
+        return retrieveResult ;        
+    }
+
+    public static MetadataService.DeleteResult[] DeleteStaticResourceFile(string StaticResName){
+        string SESSION_ID;
+        MetadataService.DeleteResult[] deleteResult ;
+        try{
+            HttpRequest getSessionReq = new HttpRequest();
+            //TODO: Put the string in Label                 
+            getSessionReq.setEndpoint('callout:MetaCheck/services/apexrest/CompDepSrchDev/UserInfoSessionInfo');
+            getSessionReq.setMethod('GET');
+            Http http = new Http();
+
+            HTTPResponse getSessionRes = http.send(getSessionReq);        
+            SESSION_ID = getSessionRes.getbody();    
+
+             if(SESSION_ID != null){
+                    SESSION_ID = SESSION_ID.replace('"','');            
+                    system.debug('&***********'+SESSION_ID); 
+                    MetadataService.MetadataPort portService = new MetadataService.MetadataPort();
+                    portService.SessionHeader = new MetadataService.SessionHeader_element();
+                    portService.SessionHeader.sessionId = SESSION_ID;
+                    // Construct unmanaged package with component Type to retrieve in zip
+                    MetadataService.MetadataPort service = portService;                            
+                    deleteResult  = service.deleteMetadata('StaticResource',new List<string> { StaticResName }); 
+                    return deleteResult;            
+             }
+        }catch(Exception exp){
+            return deleteResult ; 
+        }
+        return deleteResult ;        
+    }
+
 }

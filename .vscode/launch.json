@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Apex-Debug",
+      "type": "apex",
+      "request": "launch",
+      "logFile": "${command.AskForLogName}",
+      "workspaceRoot": "${workspaceRoot}",
+      "stopOnEntry": true,
+      "traceLog": false
+    }
+  ]
+}
