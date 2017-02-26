@@ -76,7 +76,13 @@ global class MetadataUpdateRefeXMLFileBatch implements Database.Batchable<String
 
    global void finish(Database.BatchableContext BC){ 
        if(staticResourceName != null && staticResourceName != ''){
-        MetadataService.DeleteResult[] results = MetadataReferenceUtil.DeleteStaticResourceFile('CompDepSrchDev__'+staticResourceName);
+        string np = [SELECT NamespacePrefix FROM Organization].NamespacePrefix;
+        if(np != null){
+            np = np+'__';
+        }else{
+            np = '';
+        }
+        MetadataService.DeleteResult[] results = MetadataReferenceUtil.DeleteStaticResourceFile(np+''+staticResourceName);
         system.debug('**results----*'+results);
        }       
        ReferenceBatchNo++;

@@ -97,7 +97,30 @@ public class MetadataReferenceUtil{
             if(childNode.getName() == metaRef.ValueNode__c){
                 system.debug('** referenceNode.getName%%%%%'+childNode.getName() );
                 metadataComp.value = childNode.getText();                
-            }                        
+            }     
+
+            // isActive Node Mapping
+            // For Exp: Validation Rule and Workflow Rules Etc..
+            if(childNode.getName() == 'active'){         
+                system.debug('Is Active %%%%'+childNode.getText() );
+                if(childNode.getText() == 'true'){
+                    metadataComp.isActive = true;                    
+                }else{
+                     metadataComp.isActive = false;   
+                }                            
+            }    
+
+            if(childNode.getName() == 'actions'){
+                 system.debug('** Link Action with WorflowRule '+childNode.getText() ); 
+                 if(metadataComp.metadataReferences != null ){
+                    metadataComp.metadataReferences.add(findChildReferences(childNode,metadataMapping));
+                 }else{
+                    CompReferenceList.add(findChildReferences(childNode,metadataMapping));
+                    metadataComp.metadataReferences = CompReferenceList;
+                 }
+                
+            }
+
             if(childNode.getText() != null){  
                 system.debug('** inner childNode.getText'+childNode.getText() );                                   
                  for(RefTypeRegExMapping__c rexMap : regExMapping.Values()){            
@@ -114,19 +137,38 @@ public class MetadataReferenceUtil{
                         metadataComp.metadataReferences = CompReferenceList;  
                     }            
                 }
-                if(metadataComp != null && metadataComp.MetadataApiName != null && metadataComp.MetadataType != null){
-                    if(!processeReferencesMap.containskey((metadataComp.MetadataType+'-'+metadataComp.MetadataApiName).toLowerCase())){
-                        processeReferencesMap.put((metadataComp.MetadataType+'-'+metadataComp.MetadataApiName).toLowerCase(),metadataComp);
-                    }  
-                }                
-                if(metadataMapping.containskey(childNode.getName())){
-                    processeReferencesMap.putall(FindReferenceByRefType(compApiName,metadataMapping.get(childNode.getName()),childNode,processeReferencesMap));
-                }                                                               
-            }                                       
+            } 
+
+            if(metadataComp != null && metadataComp.MetadataApiName != null && metadataComp.MetadataType != null){
+                if(!processeReferencesMap.containskey((metadataComp.MetadataType+'-'+metadataComp.MetadataApiName).toLowerCase())){
+                    processeReferencesMap.put((metadataComp.MetadataType+'-'+metadataComp.MetadataApiName).toLowerCase(),metadataComp);
+                }  
+            }                
+            if(metadataMapping.containskey(childNode.getName())){
+                processeReferencesMap.putall(FindReferenceByRefType(compApiName,metadataMapping.get(childNode.getName()),childNode,processeReferencesMap));
+            }                                                                                                     
         }                        
         return processeReferencesMap;
     }    
     
+    public static MetadataComponents findChildReferences(Dom.XMLNode actionNode,map<string,MetadataNodeMapping__c> metadataMapping){
+        MetadataComponents CompReference = new MetadataComponents();    
+        for(Dom.XMLNode childNode: actionNode.getChildElements()){
+            if(childNode.getName() == 'name'){
+                CompReference.MetadataApiName = childNode.getText() ;
+            }
+            if(childNode.getName() == 'type'){
+                for(string metaType: metadataMapping.keySet()){ 
+                    if(metaType.toLowerCase() == (childNode.getText()+'s').toLowerCase()){
+                        CompReference.MetadataType = metadataMapping.get(metaType).Metadata_Type__c;                         
+                    }               
+                }
+            }
+        }
+        system.debug('&&&&&&&&&'+CompReference);
+        return CompReference;
+    }
+
 
     public static void UpsertMetadataCompReferences(list<MetadataComponents>  metadataCompReferencelist){
         
@@ -143,6 +185,7 @@ public class MetadataReferenceUtil{
             comp.Component_API_Name__c = compRef.MetadataApiName;
             comp.Component_Type__c = compRef.MetadataType;
             comp.Value__c = compRef.Value;
+            comp.Is_Active__c = compRef.isActive;
             comp.Parent_APIName__c = compRef.ParentObject;
             comp.APINameAndType__c = (compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase();
             if(!CompUniqueKeyMap.containskey((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase())){
