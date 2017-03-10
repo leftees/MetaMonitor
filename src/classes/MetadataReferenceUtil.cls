@@ -9,7 +9,7 @@ public class MetadataReferenceUtil{
         list<MetadataComponents> metadacompReferences = new list<MetadataComponents>();
         Map<String, RefTypeRegExMapping__c> regExMapping = RefTypeRegExMapping__c.getAll();
         for(RefTypeRegExMapping__c rexMap : regExMapping.Values()){            
-            if(rexMap.Target_Type__c == metadataComp.MetadataType){
+            if(rexMap.Target_Type__c == metadataComp.MetadataType && rexMap.Component_Index__c != null){
                 /*MetadataComponents metadataComp = new MetadataComponents();
                 metadataComp.MetadataApiName = metaCompApiName;
                 metadataComp.MetadataType = metaCompType;*/
@@ -18,10 +18,10 @@ public class MetadataReferenceUtil{
                 list<MetadataComponents> CompReferenceList = new list<MetadataComponents>();
                 while(RegExmachr.find()) {                    
                     MetadataComponents refComp = new MetadataComponents();
-                    refComp.MetadataApiName = RegExmachr.group(1);
+                    refComp.MetadataApiName = RegExmachr.group(integer.valueOf(rexMap.Component_Index__c));
                     refComp.MetadataType = rexMap.Reference_Type__c; 
                     CompReferenceList.add(refComp);                   
-                    System.debug('param details: ' + RegExmachr.group(1));
+                    System.debug('param details: ' + RegExmachr.group(integer.valueOf(rexMap.Component_Index__c)));
                 }  
                 metadataComp.metadataReferences = CompReferenceList;             
             }            
@@ -124,15 +124,15 @@ public class MetadataReferenceUtil{
             if(childNode.getText() != null){  
                 system.debug('** inner childNode.getText'+childNode.getText() );                                   
                  for(RefTypeRegExMapping__c rexMap : regExMapping.Values()){            
-                    if(rexMap.Target_Type__c == metaRef.Metadata_Type__c){   
+                    if(rexMap.Target_Type__c == metaRef.Metadata_Type__c && rexMap.Component_Index__c != null){   
                         Pattern RegExptrn = Pattern.compile(rexMap.RegEx__c);
                         Matcher RegExmachr = RegExptrn.matcher(string.valueof(childNode.getText()));                        
                         while(RegExmachr.find()) {                                               
                             MetadataComponents refComp = new MetadataComponents();
-                            refComp.MetadataApiName = RegExmachr.group(1);
+                            refComp.MetadataApiName = RegExmachr.group(integer.valueOf(rexMap.Component_Index__c));
                             refComp.MetadataType = rexMap.Reference_Type__c; 
                             CompReferenceList.add(refComp);                   
-                            System.debug('param details: ' + RegExmachr.group(1));
+                            System.debug('param details: ' + RegExmachr.group(integer.valueOf(rexMap.Component_Index__c)));
                         }    
                         metadataComp.metadataReferences = CompReferenceList;  
                     }            
@@ -169,6 +169,102 @@ public class MetadataReferenceUtil{
         return CompReference;
     }
 
+    public static void findSobjectReference(string className, string classContent){        
+        
+        map<string,string> variableDataTypeMap = new map<string,string>();
+        map<string,string> parameterDataTypeMap = new map<string,string>();
+        map<string,set<string>> sObjectFieldsRefeMap = new map<string,set<string>>();
+        variableDataTypeMap = getVariableDataTypeMap(classContent);
+        sObjectFieldsRefeMap = findSObjectFields(variableDataTypeMap,classContent);
+        system.debug('sObjectFieldsRefeMap**----'+sObjectFieldsRefeMap);
+    }    
+
+    public static map<string,string> getVariableDataTypeMap(string classContent){
+        map<string,string> variableDataTypeMap = new map<string,string>();
+        Pattern findSObjectFields = Pattern.compile('(?i)\\b(?!public|\\s|static|final\\b)([a-zA-Z0-9<,]+[^.]\\s)(.+);');       
+        Matcher sObjectFieldsFind = findSObjectFields.matcher(classContent);    
+         while (sObjectFieldsFind.find()) {                         
+            string dataType = sObjectFieldsFind.group(1);
+            string variablDecl = sObjectFieldsFind.group(2);
+            if(variablDecl != null && !variablDecl.startsWith('=')){
+                system.debug('@*****----'+dataType+'--'+variablDecl);                
+                if(variablDecl.contains(',')){
+                    for(string varD: variablDecl.split(',')){
+                        string variable = varD.contains('=') ? varD.split('=')[0] : varD;
+                        variableDataTypeMap.put(variable,dataType);                        
+                    }
+                }else{
+                    string variable = variablDecl.contains('=') ? variablDecl.split('=')[0] : variablDecl;
+                    variableDataTypeMap.put(variable,dataType);                      
+                }
+            }         
+         }
+         system.debug('variableDataTypeMap**----'+variableDataTypeMap); 
+         return variableDataTypeMap;           
+    }
+
+    public static Map<string,Set<String>> findSObjectFields(map<string,string> variableDataTypeMap, string classContent){
+        map<string,set<string>> sObjectFieldsRefeMap = new map<string,set<string>>();
+        list<Schema.SObjectType> globalDescribeObj = Schema.getGlobalDescribe().Values();     
+        set<string> sObjectNames = new set<string>();
+        for(Schema.SObjectType sObjType : globalDescribeObj){
+            sObjectNames.add(sObjType.getDescribe().getName().toLowerCase());
+        }        
+        
+        for(string variableRef : variableDataTypeMap.keySet()){
+            string objectName = variableDataTypeMap.get(variableRef).toLowerCase().trim();            
+            system.debug('&&&&&&&&&*'+objectName);
+            if(sObjectNames.contains(objectName)){
+                Set<String> setOfFields= new Set<String>();
+                string fieldReferences = VariableRef + '\\.';      
+                Pattern findSObjectFields = Pattern.compile(fieldReferences);       
+                Matcher sObjectFieldsFind = findSObjectFields.matcher(classContent);
+                while (sObjectFieldsFind.find()) {
+                    system.debug('sObjectFieldsFind---->>>'+sObjectFieldsFind.end());
+                    string temp1 = classContent.substring(sObjectFieldsFind.end());
+                    system.debug('temp1indexOf---->>>'+temp1.indexOf('='));
+                    if(temp1.indexOf('=') != -1) {
+                        string temp2 = temp1.substring(0,temp1.indexOf('=')).trim();
+                        system.debug('temp2---->>>'+temp2);//classContent.indexOf('=')
+                        setOfFields.add(temp2);
+                    }
+                }
+                system.debug('setOfFields---->>>'+setOfFields);
+                if(sObjectFieldsRefeMap.containskey(objectName)){
+                    sObjectFieldsRefeMap.get(objectName).addall(setOfFields);
+                }else{
+                    sObjectFieldsRefeMap.put(objectName,setOfFields);
+                }                
+            }
+        }
+        return sObjectFieldsRefeMap;   
+    }
+
+    public static set<string> getPrimitiveDataTyes(){
+        set<string> primitiveDataType = new set<string>();
+        primitiveDataType.add('blob');
+        primitiveDataType.add('boolean');
+        primitiveDataType.add('date');
+        primitiveDataType.add('datetime');
+        primitiveDataType.add('decimal');
+        primitiveDataType.add('double');
+        primitiveDataType.add('id');
+        primitiveDataType.add('integer');
+        primitiveDataType.add('long');
+        primitiveDataType.add('object');
+        primitiveDataType.add('string');
+        primitiveDataType.add('time');
+        return primitiveDataType;
+    }
+
+    public static set<string> getReserveKeyWords(){
+        set<string> keywords = new set<string>();
+        keywords.add('public');
+        keywords.add('static');
+        keywords.add('void');
+        keywords.add('new');
+        return keywords;
+    }
 
     public static void UpsertMetadataCompReferences(list<MetadataComponents>  metadataCompReferencelist){
         

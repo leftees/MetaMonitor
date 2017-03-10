@@ -35,8 +35,8 @@ public class AsyncRetrieveStatusQueueableJob implements Queueable, Database.Allo
                     SESSION_ID = SESSION_ID.replace('"','');            
                     system.debug('&***********'+SESSION_ID); 
                     retrieveResult = MetadataReferenceUtil.CheckAsyncStatusAndCreateZipFile(asyncQueueRec.Async_Request_Id__c,SESSION_ID);
-                    if(retrieveResult != null){
-                        if(retrieveResult.done){
+                    //if(retrieveResult != null){
+                        if(retrieveResult != null && retrieveResult.done){
                             // Errors?
                             if(retrieveResult.status != 'Succeeded'){
                                 // TODO Update Parent Record   
@@ -69,7 +69,7 @@ public class AsyncRetrieveStatusQueueableJob implements Queueable, Database.Allo
                         }              
                     }
                             
-                }
+                //}
             }Catch(exception e){
                 if(!test.isRunningTest()){
                     asyncQueueRec.status__c = 'Failed';

@@ -12,25 +12,5 @@
         <members>*</members>
         <name>ApexTrigger</name>
     </types>
-    <types>
-        <members>*</members>
-        <name>AuthProvider</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ConnectedApp</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>CustomApplication</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>CustomTab</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>Settings</name>
-    </types>
     <version>36.0</version>
 </Package>
