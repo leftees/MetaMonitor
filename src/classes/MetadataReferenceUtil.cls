@@ -25,7 +25,10 @@ public class MetadataReferenceUtil{
                 }  
                 metadataComp.metadataReferences = CompReferenceList;             
             }            
-        }                 
+        }        
+        if(metadataComp.MetadataType == 'ApexClass' || metadataComp.MetadataType == 'ApexTrigger' ){
+            findObjectReference(metadataComp.metadataReferences,ComponentData);         
+        }        
         metadacompReferences.add(metadataComp); 
         return metadacompReferences ;   
     }
@@ -169,33 +172,70 @@ public class MetadataReferenceUtil{
         return CompReference;
     }
 
-    public static void findSobjectReference(string className, string classContent){        
-        
+    public static void findObjectReference(list<MetadataComponents> MetadataComponents, string classContent){                
         map<string,string> variableDataTypeMap = new map<string,string>();
         map<string,string> parameterDataTypeMap = new map<string,string>();
         map<string,set<string>> sObjectFieldsRefeMap = new map<string,set<string>>();
         variableDataTypeMap = getVariableDataTypeMap(classContent);
         sObjectFieldsRefeMap = findSObjectFields(variableDataTypeMap,classContent);
         system.debug('sObjectFieldsRefeMap**----'+sObjectFieldsRefeMap);
+        for(string obj: sObjectFieldsRefeMap.keySet()){
+            MetadataComponents refComp = new MetadataComponents();
+            refComp.MetadataApiName = obj;
+            refComp.MetadataType = 'CustomObject';             
+            MetadataComponents.add(refComp);
+            for(string field: sObjectFieldsRefeMap.get(obj)){
+                refComp = new MetadataComponents();
+                refComp.MetadataApiName = field;
+                refComp.MetadataType = 'CustomField'; 
+                refComp.ParentObject = obj;               
+                MetadataComponents.add(refComp);
+            }
+        }
+        /*for(string variable: variableDataTypeMap.keySet()){
+            string dataType = variableDataTypeMap.get(variable);            
+            if(!getStandardObjectList().contains(dataType) && dataType != 'return' && !getPrimitiveDataTyes().contains(dataType) && 
+                !dataType.contains(',')){
+                system.debug('@@@@@@@@@@@@@@dataType--'+dataType);
+                list<string> speciaChars = dataType.split('[^A-Za-z0-9]');
+                if(speciaChars.size() == 1){
+                    system.debug('@@@@@@@@@@@@@@match Apex--'+dataType);
+                    MetadataComponents refComp = new MetadataComponents();
+                    refComp.MetadataApiName = dataType;
+                    refComp.MetadataType = 'ApexClass';             
+                    MetadataComponents.add(refComp);  
+                }
+              
+            }
+        }*/
     }    
+
+    public static void findApexReferences(list<MetadataComponents> MetadataComponents, string classContent){
+        Pattern findSObjectFields = Pattern.compile('(?i)\\b(?!public|\\s|static|final|private\\b)([a-zA-Z0-9<,]+[^.]\\s)(.+);');       
+        Matcher sObjectFieldsFind = findSObjectFields.matcher(classContent);  
+        
+    }
 
     public static map<string,string> getVariableDataTypeMap(string classContent){
         map<string,string> variableDataTypeMap = new map<string,string>();
-        Pattern findSObjectFields = Pattern.compile('(?i)\\b(?!public|\\s|static|final\\b)([a-zA-Z0-9<,]+[^.]\\s)(.+);');       
+        Pattern findSObjectFields = Pattern.compile('(?i)\\b(?!public|\\s|static|final|private\\b)([a-zA-Z0-9<,]+[^.]\\s)(.+);');       
         Matcher sObjectFieldsFind = findSObjectFields.matcher(classContent);    
          while (sObjectFieldsFind.find()) {                         
-            string dataType = sObjectFieldsFind.group(1);
+            string dataType = sObjectFieldsFind.group(1).toLowerCase().trim();
             string variablDecl = sObjectFieldsFind.group(2);
-            if(variablDecl != null && !variablDecl.startsWith('=')){
-                system.debug('@*****----'+dataType+'--'+variablDecl);                
-                if(variablDecl.contains(',')){
+            if(variablDecl != null && !variablDecl.startsWith('=') && dataType != 'return'){                  
+                variablDecl = variablDecl.replaceAll('\\{(.*+)','');    
+                system.debug('@*****----'+dataType+'--'+variablDecl);        
+                if(variablDecl.contains(',') && !variablDecl.contains('(')){
                     for(string varD: variablDecl.split(',')){
-                        string variable = varD.contains('=') ? varD.split('=')[0] : varD;
+                        string variable = varD.contains('=') ? varD.split('=')[0] : varD;                        
                         variableDataTypeMap.put(variable,dataType);                        
                     }
                 }else{
+                    system.debug('variablDecl---'+variablDecl); 
                     string variable = variablDecl.contains('=') ? variablDecl.split('=')[0] : variablDecl;
-                    variableDataTypeMap.put(variable,dataType);                      
+                    system.debug('variable---'+variable); 
+                    variableDataTypeMap.put(variable.trim(),dataType.trim());                      
                 }
             }         
          }
@@ -205,16 +245,12 @@ public class MetadataReferenceUtil{
 
     public static Map<string,Set<String>> findSObjectFields(map<string,string> variableDataTypeMap, string classContent){
         map<string,set<string>> sObjectFieldsRefeMap = new map<string,set<string>>();
-        list<Schema.SObjectType> globalDescribeObj = Schema.getGlobalDescribe().Values();     
-        set<string> sObjectNames = new set<string>();
-        for(Schema.SObjectType sObjType : globalDescribeObj){
-            sObjectNames.add(sObjType.getDescribe().getName().toLowerCase());
-        }        
-        
+           
+        set<string> sObjectNames = getStandardObjectList();                      
         for(string variableRef : variableDataTypeMap.keySet()){
             string objectName = variableDataTypeMap.get(variableRef).toLowerCase().trim();            
-            system.debug('&&&&&&&&&*'+objectName);
-            if(sObjectNames.contains(objectName)){
+            system.debug('&&&&&&&&&*'+VariableRef);
+            if(sObjectNames.contains(objectName) && !VariableRef.contains('.') && !VariableRef.contains('(') && !VariableRef.contains(')')){
                 Set<String> setOfFields= new Set<String>();
                 string fieldReferences = VariableRef + '\\.';      
                 Pattern findSObjectFields = Pattern.compile(fieldReferences);       
@@ -222,12 +258,15 @@ public class MetadataReferenceUtil{
                 while (sObjectFieldsFind.find()) {
                     system.debug('sObjectFieldsFind---->>>'+sObjectFieldsFind.end());
                     string temp1 = classContent.substring(sObjectFieldsFind.end());
-                    system.debug('temp1indexOf---->>>'+temp1.indexOf('='));
-                    if(temp1.indexOf('=') != -1) {
-                        string temp2 = temp1.substring(0,temp1.indexOf('=')).trim();
-                        system.debug('temp2---->>>'+temp2);//classContent.indexOf('=')
-                        setOfFields.add(temp2);
-                    }
+                    system.debug('temp1indexOf---->>>'+temp1.indexOf('='));                
+                    string temp2 =temp1.indexOf(']') != -1 ? temp1.substring(0,temp1.indexOf(']')).trim() : temp1;
+                    temp2 = temp2.indexOf(']') != -1 ? temp2.substring(0,temp1.indexOf(']')).trim() : temp2;
+                    temp2 = temp2.indexOf(';') != -1 ? temp2.substring(0,temp1.indexOf(';')).trim() : temp2;
+                    temp2 = temp2.indexOf(' ') != -1 ? temp2.substring(0,temp1.indexOf(' ')).trim() : temp2;
+                    temp2 = temp2.indexOf(',') != -1 ? temp2.substring(0,temp1.indexOf(',')).trim() : temp2;
+                    temp2 = temp2.indexOf('(') != -1 ? temp2.substring(0,temp1.indexOf('(')).trim() : temp2;
+                    system.debug('temp2---->>>'+temp2);//classContent.indexOf('=')
+                    setOfFields.add(temp2);
                 }
                 system.debug('setOfFields---->>>'+setOfFields);
                 if(sObjectFieldsRefeMap.containskey(objectName)){
@@ -239,6 +278,16 @@ public class MetadataReferenceUtil{
         }
         return sObjectFieldsRefeMap;   
     }
+
+    public static set<string> getStandardObjectList(){
+        list<Schema.SObjectType> globalDescribeObj = Schema.getGlobalDescribe().Values();     
+        set<string> sObjectNames = new set<string>();
+        for(Schema.SObjectType sObjType : globalDescribeObj){
+            sObjectNames.add(sObjType.getDescribe().getName().toLowerCase());
+        } 
+        return sObjectNames;
+    }
+    
 
     public static set<string> getPrimitiveDataTyes(){
         set<string> primitiveDataType = new set<string>();
@@ -283,31 +332,34 @@ public class MetadataReferenceUtil{
             comp.Value__c = compRef.Value;
             comp.Is_Active__c = compRef.isActive;
             comp.Parent_APIName__c = compRef.ParentObject;
-            comp.APINameAndType__c = (compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase();
-            if(!CompUniqueKeyMap.containskey((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase())){
-                CompUniqueKeyMap.put((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase(),comp);
+            string compAPITypeUniqueKey = (compRef.MetadataType+'-'+compRef.ParentObject+'-'+compRef.MetadataApiName).toLowerCase();
+            comp.APINameAndType__c = compAPITypeUniqueKey;
+            if(!CompUniqueKeyMap.containskey(compAPITypeUniqueKey)){
+                CompUniqueKeyMap.put(compAPITypeUniqueKey,comp);
             }
-            if(!MainCompRefMap.containskey((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase()) ){
+            if(!MainCompRefMap.containskey(compAPITypeUniqueKey) ){
                 Components__c compRefRec = new Components__c();
-                compRefRec.APINameAndType__c = (compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase();
-                MainCompRefMap.put((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase(),compRefRec);
+                compRefRec.APINameAndType__c = compAPITypeUniqueKey;
+                MainCompRefMap.put(compAPITypeUniqueKey,compRefRec);
             }
             if(compRef.metadataReferences != null && compRef.metadataReferences.size() > 0){
                 for(MetadataComponents childRef: compRef.metadataReferences){    
                     Components__c refComp = new Components__c();
                     refComp.Component_API_Name__c = childRef.MetadataApiName;
-                    refComp.Component_Type__c = childRef.MetadataType;                    
-                    refComp.APINameAndType__c = (childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase();                                                
-                    if(!CompUniqueKeyMap.containskey((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase())){
-                        CompUniqueKeyMap.put((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase(),refComp);
+                    refComp.Component_Type__c = childRef.MetadataType;      
+                    refComp.Parent_APIName__c = childRef.ParentObject;    
+                    string compChildAPITypeUniqueKey = (childRef.MetadataType+'-'+childRef.ParentObject+'-'+childRef.MetadataApiName).toLowerCase();          
+                    refComp.APINameAndType__c = compChildAPITypeUniqueKey;                                                
+                    if(!CompUniqueKeyMap.containskey(compChildAPITypeUniqueKey)){
+                        CompUniqueKeyMap.put(compChildAPITypeUniqueKey,refComp);
                     }                     
                     Components__c compRefRec = new Components__c();
-                    compRefRec.APINameAndType__c = (childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase();
-                    refrnceCompMap.put((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase(),compRefRec);
+                    compRefRec.APINameAndType__c = compChildAPITypeUniqueKey;
+                    refrnceCompMap.put(compChildAPITypeUniqueKey,compRefRec);
                     Component_Reference__c compRefeRec = new Component_Reference__c();
-                    compRefeRec.Parent_Component__r = MainCompRefMap.get((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase());
-                    compRefeRec.Child_Component__r = refrnceCompMap.get((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase());
-                    compRefeRec.UniqueKey__c = CompUniqueKeyMap.get((childRef.MetadataType+'-'+childRef.MetadataApiName).toLowerCase()).APINameAndType__c+'-'+CompUniqueKeyMap.get((compRef.MetadataType+'-'+compRef.MetadataApiName).toLowerCase()).APINameAndType__c;
+                    compRefeRec.Parent_Component__r = MainCompRefMap.get(compAPITypeUniqueKey);
+                    compRefeRec.Child_Component__r = refrnceCompMap.get(compChildAPITypeUniqueKey);
+                    compRefeRec.UniqueKey__c = CompUniqueKeyMap.get(compChildAPITypeUniqueKey).APINameAndType__c+'-'+CompUniqueKeyMap.get(compAPITypeUniqueKey).APINameAndType__c;
                     upsertCompReferenceList.add(compRefeRec);                                                      
                 }
             }
@@ -344,39 +396,15 @@ public class MetadataReferenceUtil{
     
     
     public static string RemoveApexComments(string body){
-        string finalUnCommentedBody = '';
-        list<string> subStringChunks = new list<string>();
         
-        list<string> unCommentedSubStringChunks = new list<string>();
-        //Chunk largeSize Body to 400 size chunks
-        integer chunkSize = 500;
-        double numChunks = Math.ceil(body.length() / chunkSize );
-        integer startIndex = 0;
-
-        while (body != null) {
-            if (body.length() < chunkSize) {
-                subStringChunks.add(body);
-                break;
-            }
-            else {
-                subStringChunks.add(body.substring(0, chunkSize));
-                body = body.substring(chunkSize);
-            }
-        }                
-        
-        for(string chunk:subStringChunks ){
             // RegEx to Identify Single Line Comments
             String regExp = '"(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)';
-            chunk  = chunk.replaceAll(regExp, '');        
+            body  = body.replaceAll(regExp, '');        
             // RegEx to Find MultiLine Comments       
-            //regExp = '/\\*(?:.|[\\n\\r])*?\\*/';
-            //chunk  = chunk.replaceAll(regExp, '');   
-            unCommentedSubStringChunks.add(chunk);
-        }   
-            
-        finalUnCommentedBody = String.join(unCommentedSubStringChunks, ' ');      
-        system.debug('######'+finalUnCommentedBody );               
-        return finalUnCommentedBody ;
+            regExp = '(?s)\\/\\*\\*(?:(?!\\*\\*\\/).)*\\*\\*\\/';
+            body  = body.replaceAll(regExp, '');   
+             
+        return body ;
     }         
     
     

@@ -92,7 +92,7 @@ global class MetadataUpdateRefeXMLFileBatch implements Database.Batchable<String
            system.debug('** atmnt atmnt '+atmnt);
            if(atmnt.size() > 0){                   
                MetadataUpdateRefeXMLFileBatch metadataRefCompbatch = new MetadataUpdateRefeXMLFileBatch(ReferenceBatchNo);
-               Database.executeBatch(metadataRefCompbatch, 200);         
+               Database.executeBatch(metadataRefCompbatch, 100);         
            }                        
        }
    }

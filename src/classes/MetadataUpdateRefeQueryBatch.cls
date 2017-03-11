@@ -1,4 +1,4 @@
-global class MetadataUpdateRefeQueryBatch implements Database.Batchable<sObject>, Database.Stateful{
+global class MetadataUpdateRefeQueryBatch implements Database.Batchable<sObject>, Database.Stateful, Database.AllowsCallouts{
 
    global final String Query;
    global integer ReferenceBatchNo;
@@ -24,12 +24,28 @@ global class MetadataUpdateRefeQueryBatch implements Database.Batchable<sObject>
       for(sObject s : scope){
             //ApexClass cls = (ApexClass)s;
             // Get the Component Body 
-            string removedComments = MetadataReferenceUtil.RemoveApexComments(string.valueof(s.get(markUpField)));
-            MetadataComponents comp  = new MetadataComponents();
-            comp.MetadataApiName = string.valueof(s.get('Name'));
-            system.debug('&&&&&&&comp.MetadataApiName---'+comp.MetadataApiName);
-            comp.MetadataType = componentType;
-            compReferenceList.addAll(MetadataReferenceUtil.FindRefereceInMetadataBody(comp, removedComments)); 
+            string strBody = string.valueof(s.get(markUpField));
+            integer chunkSize = 100000;
+            list<string> subStringChunks = new list<string>();
+            while (strBody != null) {
+                if (strBody.length() < chunkSize) {
+                    subStringChunks.add(strBody);
+                    break;
+                }
+                else {
+                    subStringChunks.add(strBody.substring(0, chunkSize));                
+                    strBody = strBody.substring(chunkSize);
+                }
+            }   
+            for(string subStrBody:  subStringChunks){
+                string removedComments = MetadataReferenceUtil.RemoveApexComments(subStrBody);
+                MetadataComponents comp  = new MetadataComponents();
+                comp.MetadataApiName = string.valueof(s.get('Name'));
+                system.debug('&&&&&&&comp.MetadataApiName---'+comp.MetadataApiName);
+                comp.MetadataType = componentType;
+                compReferenceList.addAll(MetadataReferenceUtil.FindRefereceInMetadataBody(comp, removedComments));
+            }
+ 
       }
       // Save the Reference Details in Database
       MetadataReferenceUtil.UpsertMetadataCompReferences(compReferenceList);
@@ -47,7 +63,7 @@ global class MetadataUpdateRefeQueryBatch implements Database.Batchable<sObject>
            system.debug('** atmnt atmnt '+atmnt);
            if(atmnt.size() > 0){                   
                MetadataUpdateRefeXMLFileBatch metadataRefCompbatch = new MetadataUpdateRefeXMLFileBatch(ReferenceBatchNo);
-               Database.executeBatch(metadataRefCompbatch, 200);         
+               Database.executeBatch(metadataRefCompbatch, 100);         
            }                        
        }
    }
