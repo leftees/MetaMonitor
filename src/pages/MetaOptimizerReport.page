@@ -1,0 +1,263 @@
+<apex:page sidebar="false" showHeader="false" title="TestGen" >
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="LDScope">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"/>
+    <style>
+        .redfontColor{
+            color: red!important;            
+        }
+        .wariningFontColor{
+            color: #fcb95b!important;            
+        }   
+        .safeFontColor{
+            color: green!important;            
+        }   
+        /*.slds-table--fixed-layout thead{
+          background-color :salmon!important;
+        }        */
+
+      .headerStyle{
+        background-color: #16325c!important;
+      }
+
+      .headerColor{
+          background-color: #0070d2!important;
+      }
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+        }
+
+        /* Tooltip text */
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 180px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 6px 0;
+            border-radius: 3px;
+         
+            /* Position the tooltip text - see examples below! */
+            position: absolute;
+            z-index: 1;
+        }
+
+        /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+        .fontStyle{
+         color: white!important;
+      }
+    </style>
+
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+
+    <div class="slds-page-header headerStyle" role="banner">
+      <div class="slds-media slds-media--center">
+        <div class="slds-media__figure">
+          <svg aria-hidden="true" class="slds-icon slds-icon-standard-groups">
+            <use xlink:href="{!URLFOR($Resource.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#performance')}"></use>
+          </svg>
+        </div>
+        <div class="slds-media__body">
+          <p class="slds-page-header__title slds-truncate fontStyle" title="TestGen">Meta Optimizer</p>
+          <p class="slds-text-body--small fontStyle"></p>
+        </div>  
+        <div class="slds-media__figure slds-media__figure--reverse">
+          
+        </div>
+      </div>
+    </div>
+
+    <body ng-app="ContactApp">                     
+            <div class="bs-component" ng-controller="contAppContlr">            
+                <div class="slds-grid slds-wrap slds-grid--pull-padded">
+                    <div class="slds-p-horizontal--small slds-size--1-of-1 slds-medium-size--2-of-3 slds-large-size--2-of-3">
+                        <h3 class="slds-section-title--divider headerColor fontStyle">Contacts</h3>
+                        <div class="slds-grid slds-wrap slds-grid--pull-padded">                            
+                            <div class="slds-p-horizontal--small slds-size--1-of-1 slds-medium-size--1-of-3 slds-large-size--1-of-3">   
+                                <br/>                                                              
+                            </div>  
+                            <div class="slds-p-horizontal--small slds-size--1-of-1 slds-medium-size--1-of-3 slds-large-size--1-of-3"></div>
+                            <div class="slds-p-horizontal--small slds-size--1-of-1 slds-medium-size--1-of-3 slds-large-size--1-of-3">
+                          
+                            </div>                  
+                        </div>                            
+                        <br/>                                         
+                    </div>         
+
+                    <div class="slds-p-horizontal--small slds-size--1-of-1 slds-medium-size--1-of-3 slds-large-size--1-of-3">
+                        <h3 class="slds-section-title--divider headerColor fontStyle">Key Contacts</h3>                          
+                        <br/>
+                        <div>
+                            <h3 class="slds-section-title--divider">Highlights</h3>                       
+                            <ul class="slds-has-dividers--bottom-space">
+
+                              <li class="slds-item" ng-repeat="comp in availableComponents | orderBy:'coverage' | limitTo: 5">
+                                <div class="slds-tile slds-media">
+                                  <div class="slds-media__figure">
+                                    <svg aria-hidden="true" class="slds-icon">
+                                      <use xlink:href="/assets/icons/doctype-sprite/svg/symbols.svg#zip"></use>
+                                    </svg>
+                                  </div>
+                                  <div class="slds-media__body">
+                                    <h3 class="slds-truncate" title="SLDS_038.zip"><a href="javascript:void(0);" ng-click="OpenComponent(comp.Id);">{{comp.Name}}</a></h3>
+                                    <div class="slds-tile__detail slds-text-body--small">
+                                      <ul class="slds-list--horizontal slds-has-dividers--right">
+                                        <li class="slds-item">Coverage</li>
+                                        <li class="slds-item redfontColor">{{comp.coverage}}%</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>                              
+                            </ul>                                               
+                        </div>
+                    
+                            
+                    </div>                                      
+                </div>  
+
+                <!--<div class="slds-notify_container">
+                  <div class="slds-notify slds-notify--alert slds-theme--warning slds-theme--alert-texture" role="alert">
+                    <span class="slds-assistive-text">Warning</span>
+                    <h2>
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-m-right--x-small">
+                        <use xlink:href="{!URLFOR($Resource.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                      </svg><B>Note</B>: Test Coverage is based on Last Run. Please run the test Class to get the updated Code Coverage.
+                      <!--<a href="javascript:void(0);">More Information</a>--
+                    </h2>
+                  </div>
+                </div>-->
+
+
+                <div ng-show="loading" class="slds-spinner_container">
+                    <div class="slds-spinner--brand slds-spinner slds-spinner--medium" role="alert">
+                      <span class="slds-assistive-text">Loading</span>
+                      <div class="slds-spinner__dot-a"></div>
+                      <div class="slds-spinner__dot-b"></div>                      
+                    </div>
+                </div>  
+
+                <div ng-hide="hideModal">
+                  <div ng-show="showPopup"  >
+                          <div role="dialog" tabindex="-1" aria-labelledby="header43" ng-class="showPopup ? 'slds-modal slds-fade-in-open':''">
+                              <div ng-class="showPopup ? 'slds-modal__container':''">
+                                  <div class="slds-modal__header">
+                                      <h2 id="header43" class="slds-text-heading--medium">Generated Test Class</h2>
+                                  </div>
+                                  <div class="slds-modal__content slds-p-around--medium">
+                                      <div class="slds-tile">
+                                        <h3 class="slds-truncate" title="Salesforce UX"><a href="{{generatedURL}}" target="_blank">  {{selectedApexClass}}_Test</a></h3>
+                                      </div>                                    
+                                  </div>
+                                  <div class="slds-modal__footer">
+                                      <button type="button" class="slds-button slds-button--neutral" ng-click="hidePopUp()">Close</button>
+                                  </div>
+                              </div>
+                          </div>
+                          <div ng-class="showPopup ? 'slds-backdrop slds-backdrop--open':''"></div>
+                      </div>
+                </div>
+                <div ng-show="showError">
+                  <div class="slds-notify_container">
+                    <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture" role="alert">
+                      <button class="slds-button slds-notify__close slds-button--icon-inverse" title="Close">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                      </button>
+                      <span class="slds-assistive-text">Error</span>
+                      <h2>
+                        <svg aria-hidden="true" class="slds-icon slds-icon--small slds-m-right--x-small">
+                          <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#ban"></use>
+                        </svg>{{errorMessage}}</h2>
+                    </div>
+                  </div>
+                </div>
+            </div>          
+                                        
+   <apex:includeScript value="{!$Resource.AngularJSv1214}"/>  
+    
+   <script>  
+        var app = angular.module('ContactApp', []);        
+        app.controller('contAppContlr',function($scope, $timeout, $window){
+            $scope.availableComponents= []; //declare an empty array
+            $scope.overAllCoverage;
+            $scope.selectedApexClass = '';
+            $scope.asyncId = '';
+            $scope.generatedURL = '';
+            $scope.showPopup = false;
+            $scope.disableButton = true;
+            $scope.hasTestClass = false;
+
+            $scope.sort = function(keyname){
+                $scope.sortKey = keyname;   //set the sortKey to the param passed
+                $scope.reverse = !$scope.reverse; //if true make it false and vice versa
+            }
+
+            $scope.OpenComponent = function(Id){
+              window.open('/'+Id);
+            }
+
+            $scope.CheckOne = function(recordId,selected){
+              if(selected){
+                 $scope.disableButton = true;
+              }else{
+                 $scope.disableButton = false;
+              }
+              for (var i = 0; i < $scope.availableComponents.length; i++) {
+                if($scope.availableComponents[i].Id != recordId && !selected){
+                  $scope.availableComponents[i].selected = false;
+                }
+                
+              }
+            }        
+
+            $scope.GenerateTest = function(){    
+                $scope.selectedApexClass = '';
+                $scope.asyncId = '';
+                for (var i = 0; i < $scope.availableComponents.length; i++) {
+                  if($scope.availableComponents[i].selected){
+                    $scope.selectedApexClass =  $scope.availableComponents[i].Name;     
+                  }                
+                }                
+                        
+                if($scope.selectedApexClass != ''){
+                  $scope.showError = false;
+                  $scope.loading = true;
+
+                }else{
+                  $scope.showError = true;
+                  $scope.errorMessage = 'Please select atleast one class';
+                }
+            }
+
+
+            var CheckStatusAndCreate = function(){                              
+                if($scope.asyncId != ''){                  
+
+                }else{
+                  $scope.showError = true;
+                  $scope.errorMessage = 'An unknown error occured please contact system admin';
+                }
+            }
+
+
+            $scope.hidePopUp = function(){  
+              console.log('in hide pop');
+              $scope.showPopUp = false;
+               $scope.hideModal = true;
+            }
+
+        });
+        
+   </script>         
+ </body>  
+ </html>
+
+</apex:page>
