@@ -10,8 +10,7 @@ public class AsyncRetrieveStatusQueueableJob implements Queueable, Database.Allo
     }
     
     public void execute(QueueableContext context) {
-		//TODO : TEST CODE SCAN
-		// New TODO CODE SCAN
+		//TODO Identify the Code Scan
         string currentJobId ;
         if(!test.isRunningTest()){
             currentJobId = context.getJobId();
