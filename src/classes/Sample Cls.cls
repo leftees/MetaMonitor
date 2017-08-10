@@ -1,6 +1,6 @@
 public class CodeClimatePOC {
     
-	public class ProcessAccounts(){}
+	public class ProcessAccounts(){
 	
 		list<account> acList = [select id,Name from account];
 		
@@ -10,25 +10,17 @@ public class CodeClimatePOC {
 	
 	}
 	
-	
-	public class GetContacts(){}
-	
-		list<account> acList = [select id,Name from account];
-		
-		for(account a: acList){
-			list<contact> cList = [select id from contact where accountId =: a.id];
-		}
-	
-	}
-	
-	public class GetAll(){}
+
+	public class insertPrimaryContacts(){
 	
 		list<account> acList = [select id,Name from account];
 		
 		for(account a: acList){
-			list<contact> cList = [select id from contact where accountId =: a.id];
+			contact c = new contact();
+			c.lastname = 'SASAS S';
+			insert c;
 		}
-	
-	}	
+    
+	}		
 	
 }
