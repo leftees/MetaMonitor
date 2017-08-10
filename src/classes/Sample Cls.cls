@@ -1,4 +1,4 @@
-public class CodeClimatePOC {
+global class CodeClimatePOC {
     
 	public class ProcessAccounts(){
 	
@@ -22,6 +22,12 @@ public class CodeClimatePOC {
 		}
     
 	}
+
+	global class IdentifyGlobal(){
+	
+		//Test Global
+    
+	}	
 
 
 	public class hardCodeIdContacts(){
