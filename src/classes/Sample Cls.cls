@@ -11,17 +11,16 @@ public class CodeClimatePOC {
 	}
 	
 	
-	public class GetContacts(){
+	public class insertPrimaryContacts(){
 	
 		list<account> acList = [select id,Name from account];
 		
 		for(account a: acList){
-			list<contact> cList = [select id from contact where accountId =: a.id];
+			contact c = new contact();
+			c.lastname = 'SASAS S';
+			insert c;
 		}
-        
-        for(integer i =0; i < 300; i++){
-           account a = [Select id from account limit 1];
-        }
+    
 	}
 	
 	public class GetAll(){
