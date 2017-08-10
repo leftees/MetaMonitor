@@ -11,7 +11,7 @@ public class CodeClimatePOC {
 	}
 	
 
-	public class insertPrimaryContacts(){
+	public class PPPPPP(){
 	
 		list<account> acList = [select id,Name from account];
 		
