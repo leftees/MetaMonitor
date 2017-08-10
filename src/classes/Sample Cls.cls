@@ -11,7 +11,7 @@ public class CodeClimatePOC {
 	}
 	
 
-	public class insertPrimaryContacts(){
+	public class PPPPPP(){
 	
 		list<account> acList = [select id,Name from account];
 		
@@ -21,6 +21,19 @@ public class CodeClimatePOC {
 			insert c;
 		}
     
-	}		
+	}
+
+
+	public class hardCodeIdContacts(){
+	
+		list<account> acList = [select id,Name from account];
+		
+		for(account a: acList){
+			contact c = new contact();
+			c.accountId = 'SA213W1211dsadsw12312312';
+			insert c;
+		}
+    
+	}			
 	
 }
