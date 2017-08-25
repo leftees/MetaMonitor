@@ -1,4 +1,6 @@
 global class CodeClimatePOC {
+
+	public string SESSION_ID_S ;
     
 	public class ProcessAccounts(){
 	
